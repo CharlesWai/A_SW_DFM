@@ -1,0 +1,1191 @@
+<?xml version="1.0"?>
+<doc>
+    <assembly>
+        <name>Wpf.Controls</name>
+    </assembly>
+    <members>
+        <member name="T:Wpf.Controls.Automation.ToggleSwitchAutomationPeer">
+            <summary>
+            <see cref="T:Wpf.Controls.ToggleSwitch"/> 的 UI Automation 对端，对外暴露 UIA 的 Toggle 模式。
+            </summary>
+            <remarks>
+            为什么值得写这几十行：
+            <list type="bullet">
+            <item>屏幕阅读器（Narrator / NVDA）依据 AutomationPeer 决定"这是个什么控件、现在什么状态"。
+            不写的话，读屏软件只能报出"自定义控件"，视障用户无法操作。</item>
+            <item>企业里做 UI 自动化测试（如 WinAppDriver、FlaUI）时，测试代码要依靠 UIA 定位和操作控件；
+            没有 Peer 就只能靠坐标点击，界面一改测试全红。</item>
+            </list>
+            控件类型报成 <see cref="F:System.Windows.Automation.Peers.AutomationControlType.CheckBox"/>（而不是自定义类型），
+            是为了让读屏软件用"复选框"这一套用户熟悉的语义来播报它。
+            </remarks>
+        </member>
+        <member name="M:Wpf.Controls.Automation.ToggleSwitchAutomationPeer.#ctor(Wpf.Controls.ToggleSwitch)">
+            <summary>初始化 <see cref="T:Wpf.Controls.Automation.ToggleSwitchAutomationPeer"/>。</summary>
+            <param name="owner">被代理的开关控件。</param>
+        </member>
+        <member name="P:Wpf.Controls.Automation.ToggleSwitchAutomationPeer.ToggleState">
+            <inheritdoc />
+        </member>
+        <member name="M:Wpf.Controls.Automation.ToggleSwitchAutomationPeer.GetClassNameCore">
+            <inheritdoc />
+        </member>
+        <member name="M:Wpf.Controls.Automation.ToggleSwitchAutomationPeer.GetAutomationControlTypeCore">
+            <inheritdoc />
+        </member>
+        <member name="M:Wpf.Controls.Automation.ToggleSwitchAutomationPeer.GetPattern(System.Windows.Automation.Peers.PatternInterface)">
+            <inheritdoc />
+        </member>
+        <member name="M:Wpf.Controls.Automation.ToggleSwitchAutomationPeer.Toggle">
+            <inheritdoc />
+            <remarks>UIA 客户端可能从任意线程调用，这里统一切回控件所在线程执行。</remarks>
+        </member>
+        <member name="T:Wpf.Controls.AppMenuBar">
+            <summary>
+            应用菜单栏：一行「页面功能键 + 中间状态徽标 + 设备控制键」的组合栏，可带自绘标题行。
+            </summary>
+            <remarks>
+            <para>
+            它是画面里那一整条横栏的封装，构成对应画面规范的三段式布局：
+            </para>
+            <code>
+            ┌─────────────────────────────────────────────────────────────────────┐
+            │ ● ● ●            AAA_X.X.X.X_YYMMDD_POR - [Preview]                 │ ← 标题行（可选）
+            ├─────────────────────────────────────────────────────────────────────┤
+            │ [Home][Alarm][Config][Data][Vision][Setting]   [徽标]   [▶][⏸][⏹][状态][Logo] │ ← 键区
+            └─────────────────────────────────────────────────────────────────────┘
+                 └── LeftItemsSource ──┘   CenterContent   └── RightItemsSource ──┘
+            </code>
+            <para>
+            <b>为什么左右两组是 ItemsSource + DataTemplate，而不是三个 Content 槽位</b>：
+            画面规范要求"左组贴左、右组贴右、相邻键之间是固定间距"（不随宽度拉伸），
+            而键本身是**数据**——哪个键当前可用由用户等级与设备状态决定。
+            用数据源表达，使用方就能把 State/Accent 直接绑到 ViewModel 上，
+            界面里一行权限判断都不用写；这也让"同一批键、不同机型"的多种栏型共用一份键定义。
+            </para>
+            <para>
+            键的样式不在这里定义：每个条目由使用方的 <c>DataTemplate</c> 决定
+            （通常用 <see cref="T:Wpf.Controls.IconTileButton"/>，状态徽标用 <see cref="T:Wpf.Controls.StatusPill"/>）。
+            本控件只负责三段式布局、固定键间距与标题行。
+            </para>
+            <para>
+            ⚠️ 命名刻意避开 <c>MenuBar</c>：WPF 自带 <c>System.Windows.Controls.MenuBar</c>
+            （下拉菜单条），同名会让 XAML 里出现两个 MenuBar，是持续性的困惑来源。
+            </para>
+            </remarks>
+        </member>
+        <member name="F:Wpf.Controls.AppMenuBar.TitleProperty">
+            <summary>标识 <see cref="P:Wpf.Controls.AppMenuBar.Title"/> 依赖属性。</summary>
+        </member>
+        <member name="P:Wpf.Controls.AppMenuBar.Title">
+            <summary>标题文字（画面左上角那串画面编号，例如 <c>AAA_X.X.X.X_YYMMDD_POR</c>）。</summary>
+        </member>
+        <member name="F:Wpf.Controls.AppMenuBar.ShowTitleBarProperty">
+            <summary>标识 <see cref="P:Wpf.Controls.AppMenuBar.ShowTitleBar"/> 依赖属性。</summary>
+        </member>
+        <member name="P:Wpf.Controls.AppMenuBar.ShowTitleBar">
+            <summary>是否显示标题行（窗口按钮 + 居中标题）。画面里"通用栏"这类不带标题的栏可关掉。</summary>
+        </member>
+        <member name="F:Wpf.Controls.AppMenuBar.ShowWindowButtonsProperty">
+            <summary>标识 <see cref="P:Wpf.Controls.AppMenuBar.ShowWindowButtons"/> 依赖属性。</summary>
+        </member>
+        <member name="P:Wpf.Controls.AppMenuBar.ShowWindowButtons">
+            <summary>是否显示标题行左侧的三个窗口按钮。</summary>
+        </member>
+        <member name="F:Wpf.Controls.AppMenuBar.ShowMaximizeButtonProperty">
+            <summary>标识 <see cref="P:Wpf.Controls.AppMenuBar.ShowMaximizeButton"/> 依赖属性。</summary>
+        </member>
+        <member name="P:Wpf.Controls.AppMenuBar.ShowMaximizeButton">
+            <summary>
+            是否显示第三个圆点（最大化 / 还原）。对话框应设为 <c>false</c>。
+            </summary>
+        </member>
+        <member name="F:Wpf.Controls.AppMenuBar.ShowPreviewTagProperty">
+            <summary>标识 <see cref="P:Wpf.Controls.AppMenuBar.ShowPreviewTag"/> 依赖属性。</summary>
+        </member>
+        <member name="P:Wpf.Controls.AppMenuBar.ShowPreviewTag">
+            <summary>是否在标题后追加预览标记（<c> - [Preview]</c>）。画面预览/试运行状态用。</summary>
+        </member>
+        <member name="F:Wpf.Controls.AppMenuBar.ShowTitleDividerProperty">
+            <summary>标识 <see cref="P:Wpf.Controls.AppMenuBar.ShowTitleDivider"/> 依赖属性。</summary>
+        </member>
+        <member name="P:Wpf.Controls.AppMenuBar.ShowTitleDivider">
+            <summary>
+            是否在标题行与键区之间画一条分割线（默认开）。
+            </summary>
+            <remarks>
+            标题栏与工作区同色时，光靠外边框分不清"标题区到哪里结束"，这条线就是那道分界。
+            线的颜色跟随 <see cref="P:System.Windows.Controls.Control.BorderBrush"/>，
+            与栏体底边线保持同一种线；关掉 <see cref="P:Wpf.Controls.AppMenuBar.ShowTitleBar"/> 时它自动隐藏。
+            </remarks>
+        </member>
+        <member name="F:Wpf.Controls.AppMenuBar.WindowButtonCommandProperty">
+            <summary>标识 <see cref="P:Wpf.Controls.AppMenuBar.WindowButtonCommand"/> 依赖属性。</summary>
+        </member>
+        <member name="P:Wpf.Controls.AppMenuBar.WindowButtonCommand">
+            <summary>
+            标题行三个圆点的命令。命令参数是 <see cref="T:Wpf.Controls.WindowButtonKind"/>（Close / Minimize / MaximizeOrRestore）。
+            </summary>
+            <remarks>
+            <para>
+            控件**不自己关窗口**：它可能被放在 Window 里，也可能放在设计器或无窗口宿主里，
+            动作应当由宿主决定。宿主通常这样接（本仓库的看板页就是这么做的）：
+            </para>
+            <code>
+            &lt;controls:AppMenuBar WindowButtonCommand="{Binding WindowButtonCommand,
+                    RelativeSource={RelativeSource AncestorType={x:Type Window}}}" /&gt;
+            </code>
+            <para>
+            为 <c>null</c> 时三个圆点按普通图形渲染、点击无动作 —— 用在带系统标题栏的窗口里时正是想要的效果。
+            </para>
+            </remarks>
+        </member>
+        <member name="F:Wpf.Controls.AppMenuBar.LeftItemsSourceProperty">
+            <summary>标识 <see cref="P:Wpf.Controls.AppMenuBar.LeftItemsSource"/> 依赖属性。</summary>
+        </member>
+        <member name="P:Wpf.Controls.AppMenuBar.LeftItemsSource">
+            <summary>左组条目（页面功能键），贴左排列。</summary>
+        </member>
+        <member name="F:Wpf.Controls.AppMenuBar.LeftItemTemplateProperty">
+            <summary>标识 <see cref="P:Wpf.Controls.AppMenuBar.LeftItemTemplate"/> 依赖属性。</summary>
+        </member>
+        <member name="P:Wpf.Controls.AppMenuBar.LeftItemTemplate">
+            <summary>
+            左组条目模板。留空时 WPF 会按条目类型自动查找隐式 <c>DataTemplate</c>
+            （<c>&lt;DataTemplate DataType="{x:Type local:MenuKey}"&gt;</c>），
+            这是混装多种条目（键 + 状态 + Logo）时更省事的做法。
+            </summary>
+        </member>
+        <member name="F:Wpf.Controls.AppMenuBar.RightItemsSourceProperty">
+            <summary>标识 <see cref="P:Wpf.Controls.AppMenuBar.RightItemsSource"/> 依赖属性。</summary>
+        </member>
+        <member name="P:Wpf.Controls.AppMenuBar.RightItemsSource">
+            <summary>右组条目（设备控制键、用户等级/状态、厂商标记等），贴右排列。</summary>
+        </member>
+        <member name="F:Wpf.Controls.AppMenuBar.RightItemTemplateProperty">
+            <summary>标识 <see cref="P:Wpf.Controls.AppMenuBar.RightItemTemplate"/> 依赖属性。</summary>
+        </member>
+        <member name="P:Wpf.Controls.AppMenuBar.RightItemTemplate">
+            <summary>右组条目模板（留空则按条目类型自动匹配隐式模板）。</summary>
+        </member>
+        <member name="F:Wpf.Controls.AppMenuBar.ItemGapProperty">
+            <summary>标识 <see cref="P:Wpf.Controls.AppMenuBar.ItemGap"/> 依赖属性。</summary>
+        </member>
+        <member name="P:Wpf.Controls.AppMenuBar.ItemGap">
+            <summary>
+            相邻键之间的固定间距。画面规范明确要求"两键之间是固定间距"，
+            因此这里用固定值而不是等分布局：栏变宽时多出来的空间全部落在中间，键不会跟着变宽。
+            </summary>
+        </member>
+        <member name="F:Wpf.Controls.AppMenuBar.CenterContentProperty">
+            <summary>标识 <see cref="P:Wpf.Controls.AppMenuBar.CenterContent"/> 依赖属性。</summary>
+        </member>
+        <member name="P:Wpf.Controls.AppMenuBar.CenterContent">
+            <summary>
+            栏中间的内容。三种典型用法（对应画面里的几种栏型）：
+            <list type="bullet">
+            <item>机型徽标：一个填色圆角标签，如 <c>Normal(E/M)</c> / <c>M-SKU</c> / <c>E-SKU</c>；</item>
+            <item>工位标识：一段浅灰大字（如 <c>STATION ID</c>）做占位；</item>
+            <item>留空（<c>null</c>）：只用左右两组键的基础栏。</item>
+            </list>
+            </summary>
+        </member>
+        <member name="F:Wpf.Controls.AppMenuBar.CenterContentTemplateProperty">
+            <summary>标识 <see cref="P:Wpf.Controls.AppMenuBar.CenterContentTemplate"/> 依赖属性。</summary>
+        </member>
+        <member name="P:Wpf.Controls.AppMenuBar.CenterContentTemplate">
+            <summary>中间内容的模板。中间内容直接放控件（如 <see cref="T:Wpf.Controls.StatusPill"/>）时不需要设。</summary>
+        </member>
+        <member name="T:Wpf.Controls.ChipToggle">
+            <summary>
+            可选芯片：小圆角标签，可选中；用于数据页的 IO/Tossing、Hourly/Daily 切换，
+            以及登录弹窗的 Level 1/2/3 彩色胶囊。
+            </summary>
+            <remarks>
+            <para>
+            继承 <see cref="T:System.Windows.Controls.Primitives.ToggleButton"/>（而不是 RadioButton），多选/单选都可以靠宿主的分组逻辑控制；
+            登录弹窗那种"单选彩色胶囊"把 <see cref="P:Wpf.Controls.ChipToggle.CheckedBackground"/> 设成各自颜色即可。
+            </para>
+            <code>
+            &lt;controls:ChipToggle Content="IO" IsChecked="True" /&gt;
+            &lt;controls:ChipToggle Content="Level 1" CheckedBackground="#FFD3EB73" /&gt;
+            </code>
+            </remarks>
+        </member>
+        <member name="F:Wpf.Controls.ChipToggle.CheckedBackgroundProperty">
+            <summary>标识 <see cref="P:Wpf.Controls.ChipToggle.CheckedBackground"/> 依赖属性。</summary>
+        </member>
+        <member name="F:Wpf.Controls.ChipToggle.CheckedForegroundProperty">
+            <summary>标识 <see cref="P:Wpf.Controls.ChipToggle.CheckedForeground"/> 依赖属性。</summary>
+        </member>
+        <member name="F:Wpf.Controls.ChipToggle.CheckedBorderBrushProperty">
+            <summary>标识 <see cref="P:Wpf.Controls.ChipToggle.CheckedBorderBrush"/> 依赖属性。</summary>
+        </member>
+        <member name="F:Wpf.Controls.ChipToggle.CornerRadiusProperty">
+            <summary>标识 <see cref="P:Wpf.Controls.ChipToggle.CornerRadius"/> 依赖属性。</summary>
+        </member>
+        <member name="P:Wpf.Controls.ChipToggle.CheckedBackground">
+            <summary>选中时的底色（为空则用默认的浅灰）。</summary>
+        </member>
+        <member name="P:Wpf.Controls.ChipToggle.CheckedForeground">
+            <summary>选中时的文字色（为空则用默认深色）。</summary>
+        </member>
+        <member name="P:Wpf.Controls.ChipToggle.CheckedBorderBrush">
+            <summary>选中时的描边色。</summary>
+        </member>
+        <member name="P:Wpf.Controls.ChipToggle.CornerRadius">
+            <summary>圆角（默认 3px）。</summary>
+        </member>
+        <member name="T:Wpf.Controls.DialogShell">
+            <summary>
+            弹窗外壳：圆角外框 + 顶部标题行（三圆点 + 居中标题 + [Preview] 标签）+ 内容区。
+            </summary>
+            <remarks>
+            <para>
+            本库所有对话框（登录 / 确认 / 硬件配置）的外观都由它统一，避免每个弹窗各自抄一遍
+            "外框 + AppMenuBar + 两行布局"。内容区放什么由引用方决定。
+            </para>
+            <para>
+            用法（Window 自身仍是 <c>WindowStyle=None</c> + <c>WindowChrome</c>，见演示程序）：
+            <code>
+            &lt;controls:DialogShell Title="Dialog" WindowButtonCommand="{Binding WindowButtonCommand}"&gt;
+              &lt;Grid Margin="12,8,12,10"&gt; ...内容... &lt;/Grid&gt;
+            &lt;/controls:DialogShell&gt;
+            </code>
+            </para>
+            </remarks>
+        </member>
+        <member name="F:Wpf.Controls.DialogShell.TitleProperty">
+            <summary>标识 <see cref="P:Wpf.Controls.DialogShell.Title"/> 依赖属性。</summary>
+        </member>
+        <member name="F:Wpf.Controls.DialogShell.ShowPreviewTagProperty">
+            <summary>标识 <see cref="P:Wpf.Controls.DialogShell.ShowPreviewTag"/> 依赖属性。</summary>
+        </member>
+        <member name="F:Wpf.Controls.DialogShell.ShowMaximizeButtonProperty">
+            <summary>标识 <see cref="P:Wpf.Controls.DialogShell.ShowMaximizeButton"/> 依赖属性（默认 false：对话框不该能最大化）。</summary>
+        </member>
+        <member name="P:Wpf.Controls.DialogShell.ShowMaximizeButton">
+            <summary>是否显示最大化圆点（对话框默认不显示）。</summary>
+        </member>
+        <member name="F:Wpf.Controls.DialogShell.WindowButtonCommandProperty">
+            <summary>标识 <see cref="P:Wpf.Controls.DialogShell.WindowButtonCommand"/> 依赖属性。</summary>
+        </member>
+        <member name="P:Wpf.Controls.DialogShell.Title">
+            <summary>标题文字（<see cref="P:Wpf.Controls.DialogShell.ShowPreviewTag"/> 为真时自动补 " - [Preview]"）。</summary>
+        </member>
+        <member name="P:Wpf.Controls.DialogShell.ShowPreviewTag">
+            <summary>标题后面是否带 [Preview] 标签。</summary>
+        </member>
+        <member name="P:Wpf.Controls.DialogShell.WindowButtonCommand">
+            <summary>标题行三个圆点（关 / 最小化 / 最大化）的命令。</summary>
+        </member>
+        <member name="T:Wpf.Controls.ButtonVariant">
+            <summary>按钮的视觉变体。</summary>
+        </member>
+        <member name="F:Wpf.Controls.ButtonVariant.Default">
+            <summary>次要操作：白底、浅灰描边、深色文字（Cancel / Login 等）。</summary>
+        </member>
+        <member name="F:Wpf.Controls.ButtonVariant.Primary">
+            <summary>主操作：品牌蓝底、白字（OK / Yes / Save）。</summary>
+        </member>
+        <member name="F:Wpf.Controls.ButtonVariant.Dark">
+            <summary>深色操作：深灰底、白字（Machine Log / HIVE Log 这类工具按钮）。</summary>
+        </member>
+        <member name="F:Wpf.Controls.ButtonVariant.Tool">
+            <summary>工具按钮：近白底、浅灰描边（报警页工具栏、配置页 Edit）。</summary>
+        </member>
+        <member name="F:Wpf.Controls.ButtonVariant.Muted">
+            <summary>次要强调：中灰底、白字（数据页 Export）。</summary>
+        </member>
+        <member name="T:Wpf.Controls.HmiButton">
+            <summary>
+            HMI 通用按钮：一套模板覆盖三种变体（次要 / 主操作 / 深色）。
+            </summary>
+            <remarks>
+            <para>
+            之所以做成控件而不是"三个 <c>Style</c>"：本库的主题字典只参与默认样式查找、
+            **不参与资源查找**（见 README），所以演示程序没法 <c>StaticResource</c> 到库里的样式；
+            做成带默认样式键的控件，引用方 <c>new HmiButton()</c> 即可拿到外观。
+            </para>
+            <para>
+            ⚠️ 三种变体各自的 hover / pressed 色都由 <see cref="P:Wpf.Controls.HmiButton.Variant"/> 一次性配好，
+            不留在 XAML 触发器里写死 —— 这正是之前"基于基础样式改个底色，结果悬停变成浅灰、白字看不清"
+            那个坑的根因。要改配色改 <see cref="M:Wpf.Controls.HmiButton.ApplyVariant(Wpf.Controls.ButtonVariant)"/> 一处即可。
+            </para>
+            <para>
+            用法：
+            <code>
+            &lt;controls:HmiButton Content="Cancel" Width="64" Height="20" /&gt;
+            &lt;controls:HmiButton Content="OK" Variant="Primary" Width="64" Height="20" /&gt;
+            &lt;controls:HmiButton Content="Machine Log" Variant="Dark" Width="86" /&gt;
+            </code>
+            </para>
+            </remarks>
+        </member>
+        <member name="F:Wpf.Controls.HmiButton.VariantProperty">
+            <summary>标识 <see cref="P:Wpf.Controls.HmiButton.Variant"/> 依赖属性。</summary>
+        </member>
+        <member name="F:Wpf.Controls.HmiButton.CornerRadiusProperty">
+            <summary>标识 <see cref="P:Wpf.Controls.HmiButton.CornerRadius"/> 依赖属性。</summary>
+        </member>
+        <member name="F:Wpf.Controls.HmiButton.HoverBackgroundProperty">
+            <summary>标识 <see cref="P:Wpf.Controls.HmiButton.HoverBackground"/> 依赖属性。</summary>
+        </member>
+        <member name="F:Wpf.Controls.HmiButton.PressedBackgroundProperty">
+            <summary>标识 <see cref="P:Wpf.Controls.HmiButton.PressedBackground"/> 依赖属性。</summary>
+        </member>
+        <member name="F:Wpf.Controls.HmiButton.DisabledBackgroundProperty">
+            <summary>标识 <see cref="P:Wpf.Controls.HmiButton.DisabledBackground"/> 依赖属性。</summary>
+        </member>
+        <member name="F:Wpf.Controls.HmiButton.DisabledForegroundProperty">
+            <summary>标识 <see cref="P:Wpf.Controls.HmiButton.DisabledForeground"/> 依赖属性。</summary>
+        </member>
+        <member name="P:Wpf.Controls.HmiButton.Variant">
+            <summary>视觉变体。</summary>
+        </member>
+        <member name="P:Wpf.Controls.HmiButton.CornerRadius">
+            <summary>圆角（默认 5px，与画面规范里的对话框按钮一致）。</summary>
+        </member>
+        <member name="P:Wpf.Controls.HmiButton.HoverBackground">
+            <summary>悬停底色（由 <see cref="P:Wpf.Controls.HmiButton.Variant"/> 自动配置）。</summary>
+        </member>
+        <member name="P:Wpf.Controls.HmiButton.PressedBackground">
+            <summary>按下底色（由 <see cref="P:Wpf.Controls.HmiButton.Variant"/> 自动配置）。</summary>
+        </member>
+        <member name="P:Wpf.Controls.HmiButton.DisabledBackground">
+            <summary>禁用底色。</summary>
+        </member>
+        <member name="P:Wpf.Controls.HmiButton.DisabledForeground">
+            <summary>禁用文字色。</summary>
+        </member>
+        <member name="T:Wpf.Controls.HmiCheckBox">
+            <summary>
+            HMI 风格勾选框：圆角方块，选中为蓝底白勾，禁用置灰。
+            </summary>
+            <remarks>
+            用法与 <see cref="T:System.Windows.Controls.CheckBox"/> 一致（<c>IsChecked</c> / <c>Content</c> / <c>Command</c>），
+            只需把标签名换成 <c>controls:HmiCheckBox</c>。
+            </remarks>
+        </member>
+        <member name="T:Wpf.Controls.PanelVariant">
+            <summary>面板的三种形态。</summary>
+        </member>
+        <member name="F:Wpf.Controls.PanelVariant.Panel">
+            <summary>普通面板：`#D3D3D3` 实心、无边框（看板里的图表容器）。</summary>
+        </member>
+        <member name="F:Wpf.Controls.PanelVariant.Group">
+            <summary>分组框：透明底 + 细边框 + 圆角 + 标题（设置页的 General / Hardware Setting）。</summary>
+        </member>
+        <member name="F:Wpf.Controls.PanelVariant.Card">
+            <summary>卡片：同面板色 + 细边框 + 圆角，用于信息卡（工位信息卡）。</summary>
+        </member>
+        <member name="T:Wpf.Controls.HmiPanel">
+            <summary>
+            HMI 面板：一块带可选标题的容器，三种形态覆盖看板 / 分组框 / 信息卡。
+            </summary>
+            <remarks>
+            用法：
+            <code>
+            &lt;controls:HmiPanel Title="Machine State"&gt; ...内容... &lt;/controls:HmiPanel&gt;
+            &lt;controls:HmiPanel Variant="Group" Title="General"&gt; ...内容... &lt;/controls:HmiPanel&gt;
+            &lt;controls:HmiPanel Variant="Card" BorderBrush="#FF767676"&gt; ...内容... &lt;/controls:HmiPanel&gt;
+            </code>
+            </remarks>
+        </member>
+        <member name="F:Wpf.Controls.HmiPanel.TitleProperty">
+            <summary>标识 <see cref="P:Wpf.Controls.HmiPanel.Title"/> 依赖属性。</summary>
+        </member>
+        <member name="F:Wpf.Controls.HmiPanel.VariantProperty">
+            <summary>标识 <see cref="P:Wpf.Controls.HmiPanel.Variant"/> 依赖属性。</summary>
+        </member>
+        <member name="F:Wpf.Controls.HmiPanel.TitleFontSizeProperty">
+            <summary>标识 <see cref="P:Wpf.Controls.HmiPanel.TitleFontSize"/> 依赖属性。</summary>
+        </member>
+        <member name="F:Wpf.Controls.HmiPanel.ContentPaddingProperty">
+            <summary>标识 <see cref="P:Wpf.Controls.HmiPanel.ContentPadding"/> 依赖属性。</summary>
+        </member>
+        <member name="P:Wpf.Controls.HmiPanel.Title">
+            <summary>面板标题（空 = 不显示标题行）。</summary>
+        </member>
+        <member name="P:Wpf.Controls.HmiPanel.Variant">
+            <summary>面板形态。</summary>
+        </member>
+        <member name="P:Wpf.Controls.HmiPanel.TitleFontSize">
+            <summary>标题字号。</summary>
+        </member>
+        <member name="P:Wpf.Controls.HmiPanel.ContentPadding">
+            <summary>内容与面板边缘的间距。</summary>
+        </member>
+        <member name="F:Wpf.Controls.HmiPanel.CornerRadiusProperty">
+            <summary>标识 <see cref="P:Wpf.Controls.HmiPanel.CornerRadius"/> 依赖属性。</summary>
+        </member>
+        <member name="P:Wpf.Controls.HmiPanel.CornerRadius">
+            <summary>圆角（Group / Card 形态默认带圆角）。</summary>
+        </member>
+        <member name="T:Wpf.Controls.HmiRadioButton">
+            <summary>
+            HMI 风格单选框：圆环，选中为蓝底白点，禁用置灰。
+            </summary>
+            <remarks>
+            用法与 <see cref="T:System.Windows.Controls.RadioButton"/> 一致（<c>IsChecked</c> / <c>GroupName</c> / <c>Content</c>），
+            只需把标签名换成 <c>controls:HmiRadioButton</c>。
+            </remarks>
+        </member>
+        <member name="T:Wpf.Controls.HmiSeparator">
+            <summary>
+            HMI 分隔线：1px 细线，横向或纵向。
+            </summary>
+            <remarks>
+            相当于画面规范里用作"视觉分组"的细线（数据页、配置页里都有）：
+            <code>
+            &lt;controls:HmiSeparator /&gt;
+            &lt;controls:HmiSeparator Orientation="Vertical" Margin="8,0" /&gt;
+            </code>
+            </remarks>
+        </member>
+        <member name="F:Wpf.Controls.HmiSeparator.OrientationProperty">
+            <summary>标识 <see cref="P:Wpf.Controls.HmiSeparator.Orientation"/> 依赖属性。</summary>
+        </member>
+        <member name="P:Wpf.Controls.HmiSeparator.Orientation">
+            <summary>线方向（横向 = 一条水平线）。</summary>
+        </member>
+        <member name="T:Wpf.Controls.TextLevel">
+            <summary>文本层级（对应画面规范里的几种字重/字号）。</summary>
+        </member>
+        <member name="F:Wpf.Controls.TextLevel.Display">
+            <summary>页面大标题（28px SemiBold，画廊/欢迎页用）。</summary>
+        </member>
+        <member name="F:Wpf.Controls.TextLevel.Subtitle">
+            <summary>副标题（14px 常规，说明文字）。</summary>
+        </member>
+        <member name="F:Wpf.Controls.TextLevel.Title">
+            <summary>面板标题（13px 加粗，深色）。</summary>
+        </member>
+        <member name="F:Wpf.Controls.TextLevel.Section">
+            <summary>小节标题（11px 加粗）。</summary>
+        </member>
+        <member name="F:Wpf.Controls.TextLevel.Body">
+            <summary>正文（11px 常规）。</summary>
+        </member>
+        <member name="F:Wpf.Controls.TextLevel.Label">
+            <summary>字段标签（10px，深色）。</summary>
+        </member>
+        <member name="F:Wpf.Controls.TextLevel.Value">
+            <summary>字段值（10px，灰度更浅）。</summary>
+        </member>
+        <member name="F:Wpf.Controls.TextLevel.Caption">
+            <summary>说明/脚注（9px，浅灰）。</summary>
+        </member>
+        <member name="F:Wpf.Controls.TextLevel.Muted">
+            <summary>弱化文字（9px，更浅）。</summary>
+        </member>
+        <member name="T:Wpf.Controls.HmiText">
+            <summary>
+            HMI 文本：用一个控件表达画面规范里的几种文字层级，避免每个页面各自定义 Title/Small/Value 样式。
+            </summary>
+            <remarks>
+            <para>
+            <see cref="T:System.Windows.Controls.TextBlock"/> 不是 <c>Control</c>，没有默认样式查找，所以这里做成
+            <see cref="T:System.Windows.Controls.Control"/> + 内部 <see cref="T:System.Windows.Controls.TextBlock"/> 模板；用法与 TextBlock 接近：
+            </para>
+            <code>
+            &lt;controls:HmiText Level="Title" Text="Machine State" /&gt;
+            &lt;controls:HmiText Level="Label" Text="Input/Output" /&gt;
+            &lt;controls:HmiText Level="Value" Text="xx/xx" /&gt;
+            </code>
+            <para>改一层级的字号/颜色只需改 <see cref="M:Wpf.Controls.HmiText.ApplyLevel(Wpf.Controls.TextLevel)"/> 一处。</para>
+            </remarks>
+        </member>
+        <member name="M:Wpf.Controls.HmiText.#ctor">
+            <summary>初始化文本控件。</summary>
+            <remarks>
+            Level 在模板里被赋值时，本控件的 Style 可能还没套上；等 Loaded 再刷一次，
+            保证模板内的 HmiText 也按层级显示（Display/Subtitle 这类大字号尤其明显）。
+            </remarks>
+        </member>
+        <member name="F:Wpf.Controls.HmiText.TextProperty">
+            <summary>标识 <see cref="P:Wpf.Controls.HmiText.Text"/> 依赖属性。</summary>
+        </member>
+        <member name="F:Wpf.Controls.HmiText.LevelProperty">
+            <summary>标识 <see cref="P:Wpf.Controls.HmiText.Level"/> 依赖属性。</summary>
+        </member>
+        <member name="F:Wpf.Controls.HmiText.TextWrappingProperty">
+            <summary>标识 <see cref="P:Wpf.Controls.HmiText.TextWrapping"/> 依赖属性。</summary>
+        </member>
+        <member name="F:Wpf.Controls.HmiText.TextAlignmentProperty">
+            <summary>标识 <see cref="P:Wpf.Controls.HmiText.TextAlignment"/> 依赖属性。</summary>
+        </member>
+        <member name="P:Wpf.Controls.HmiText.Text">
+            <summary>文字内容。</summary>
+        </member>
+        <member name="P:Wpf.Controls.HmiText.Level">
+            <summary>文字层级（同时决定字号、字重、颜色）。</summary>
+        </member>
+        <member name="P:Wpf.Controls.HmiText.TextWrapping">
+            <summary>换行方式。</summary>
+        </member>
+        <member name="P:Wpf.Controls.HmiText.TextAlignment">
+            <summary>水平对齐。</summary>
+        </member>
+        <member name="T:Wpf.Controls.HmiTextBox">
+            <summary>
+            HMI 风格输入框：圆角白底 + 浅灰描边，获得焦点时描边变品牌蓝。
+            </summary>
+            <remarks>
+            做成控件（而不是"在宿主里写一个隐式 Style"）是为了坚持**只靠命名空间引入**的使用方式：
+            <code>
+            xmlns:controls="clr-namespace:Wpf.Controls;assembly=Wpf.Controls"
+            &lt;controls:HmiTextBox Text="{Binding BadgeId}" IsReadOnly="True" /&gt;
+            </code>
+            不需要合并任何资源字典。<see cref="T:System.Windows.Controls.TextBox"/> 的 <c>Text</c> / <c>IsReadOnly</c> /
+            <c>MaxLength</c> 等用法完全不变。
+            </remarks>
+        </member>
+        <member name="T:Wpf.Controls.HmiWindow">
+            <summary>
+            HMI 窗口外壳（可选基类）：无系统标题栏 + 顶部标题行（三圆点 / 居中标题 / [Preview]）+ 内容区。
+            </summary>
+            <remarks>
+            <para>
+            适合"新工程想让每个窗口都自动带 HMI 外壳"的场景：窗口直接
+            <c>public partial class MyWindow : HmiWindow</c>，XAML 根元素改成 &lt;controls:HmiWindow&gt; 即可。
+            </para>
+            <para>
+            不继承它也没关系：库里的控件（HmiButton / ToggleSwitch / AppMenuBar …）都是独立的，
+            宿主用普通 <see cref="T:System.Windows.Window"/> 同样能摆出一样的界面。
+            </para>
+            <para>
+            标题文案直接用 <see cref="P:System.Windows.Window.Title"/>（标题行会自动加 " - [Preview]"，
+            由 <see cref="P:Wpf.Controls.HmiWindow.ShowPreviewTag"/> 控制）。三个圆点的命令由宿主提供。
+            </para>
+            </remarks>
+        </member>
+        <member name="F:Wpf.Controls.HmiWindow.ShowPreviewTagProperty">
+            <summary>标识 <see cref="P:Wpf.Controls.HmiWindow.ShowPreviewTag"/> 依赖属性。</summary>
+        </member>
+        <member name="F:Wpf.Controls.HmiWindow.ShowMaximizeButtonProperty">
+            <summary>标识 <see cref="P:Wpf.Controls.HmiWindow.ShowMaximizeButton"/> 依赖属性。</summary>
+        </member>
+        <member name="F:Wpf.Controls.HmiWindow.ShowWindowButtonsProperty">
+            <summary>标识 <see cref="P:Wpf.Controls.HmiWindow.ShowWindowButtons"/> 依赖属性。</summary>
+        </member>
+        <member name="F:Wpf.Controls.HmiWindow.WindowButtonCommandProperty">
+            <summary>标识 <see cref="P:Wpf.Controls.HmiWindow.WindowButtonCommand"/> 依赖属性。</summary>
+        </member>
+        <member name="P:Wpf.Controls.HmiWindow.ShowPreviewTag">
+            <summary>标题后是否带 [Preview] 标签（默认带）。</summary>
+        </member>
+        <member name="P:Wpf.Controls.HmiWindow.ShowMaximizeButton">
+            <summary>是否显示最大化 / 还原圆点（对话框类窗口关掉它）。</summary>
+        </member>
+        <member name="P:Wpf.Controls.HmiWindow.ShowWindowButtons">
+            <summary>是否显示三个圆点。</summary>
+        </member>
+        <member name="P:Wpf.Controls.HmiWindow.WindowButtonCommand">
+            <summary>圆点命令（参数为 <see cref="T:Wpf.Controls.WindowButtonKind"/>）。</summary>
+        </member>
+        <member name="T:Wpf.Controls.IconTileButton">
+            <summary>
+            图标图块按钮：一个圆角方块里放一个矢量图标，用颜色表达功能状态。
+            </summary>
+            <remarks>
+            <para>
+            用于密集排列的功能键/状态键（Home、Alarm、Config、Running、Paused、Stopped 之类）：
+            图标本身不变，全靠底色表达"已激励 / 报警 / 未激励 / 权限禁用"四种状态，
+            因此操作员不需要读文字就能扫视出哪些功能是活的。
+            </para>
+            <para>
+            <b>为什么继承 <see cref="T:System.Windows.Controls.Button"/> 而不是 <see cref="T:System.Windows.Controls.Control"/></b>：
+            点击、<c>Command</c>、<c>CommandParameter</c>、键盘 Space/Enter 激活、焦点导航、
+            <c>IsDefault</c> 等行为全都由 <see cref="T:System.Windows.Controls.Primitives.ButtonBase"/> 提供，
+            直接复用可以少写几百行，
+            也保证它与界面里其它按钮的行为完全一致。本类只负责"外观状态"这一件事。
+            </para>
+            <para>
+            用法：
+            <code>
+            &lt;controls:IconTileButton Icon="{StaticResource Icon.Home}"
+                                      AccentBrush="#FFF5B301"
+                                      State="Energized"
+                                      ToolTip="Home"
+                                      Click="OnHomeClick" /&gt;
+            </code>
+            </para>
+            <para>
+            <see cref="P:Wpf.Controls.IconTileButton.State"/> 与 <c>IsEnabled</c> 是两件事：
+            <see cref="F:Wpf.Controls.TileState.Disabled"/> 表示"当前用户等级不允许"（业务状态，按钮仍可点，由业务逻辑拒绝）；
+            <c>IsEnabled=False</c> 表示"此刻真的不可用"（WPF 状态，连点击事件都不会有）。
+            二者视觉上都变淡，但语义与用法不同。
+            </para>
+            </remarks>
+        </member>
+        <member name="M:Wpf.Controls.IconTileButton.#ctor">
+            <summary>初始化图标图块按钮。</summary>
+        </member>
+        <member name="F:Wpf.Controls.IconTileButton.IconProperty">
+            <summary>标识 <see cref="P:Wpf.Controls.IconTileButton.Icon"/> 依赖属性。</summary>
+        </member>
+        <member name="P:Wpf.Controls.IconTileButton.Icon">
+            <summary>图标矢量形状。建议用 24×24 视框的路径数据，便于与其它图标对齐。</summary>
+        </member>
+        <member name="F:Wpf.Controls.IconTileButton.StateProperty">
+            <summary>标识 <see cref="P:Wpf.Controls.IconTileButton.State"/> 依赖属性。</summary>
+        </member>
+        <member name="P:Wpf.Controls.IconTileButton.State">
+            <summary>显示状态，决定底色与图标色。</summary>
+        </member>
+        <member name="F:Wpf.Controls.IconTileButton.AccentBrushProperty">
+            <summary>标识 <see cref="P:Wpf.Controls.IconTileButton.AccentBrush"/> 依赖属性。</summary>
+        </member>
+        <member name="P:Wpf.Controls.IconTileButton.AccentBrush">
+            <summary>本功能自己的强调色，仅在 <see cref="F:Wpf.Controls.TileState.Energized"/> 时使用。</summary>
+        </member>
+        <member name="F:Wpf.Controls.IconTileButton.AlarmBrushProperty">
+            <summary>标识 <see cref="P:Wpf.Controls.IconTileButton.AlarmBrush"/> 依赖属性。</summary>
+        </member>
+        <member name="P:Wpf.Controls.IconTileButton.AlarmBrush">
+            <summary>报警态底色。所有功能共用同一个警示色，保证"报警"在扫视时一眼可辨。</summary>
+        </member>
+        <member name="F:Wpf.Controls.IconTileButton.TileSizeProperty">
+            <summary>标识 <see cref="P:Wpf.Controls.IconTileButton.TileSize"/> 依赖属性。</summary>
+        </member>
+        <member name="P:Wpf.Controls.IconTileButton.TileSize">
+            <summary>图块边长（正方形）。</summary>
+        </member>
+        <member name="F:Wpf.Controls.IconTileButton.GlyphSizeProperty">
+            <summary>标识 <see cref="P:Wpf.Controls.IconTileButton.GlyphSize"/> 依赖属性。</summary>
+        </member>
+        <member name="P:Wpf.Controls.IconTileButton.GlyphSize">
+            <summary>图标大小。</summary>
+        </member>
+        <member name="F:Wpf.Controls.IconTileButton.GlyphBrushProperty">
+            <summary>标识 <see cref="P:Wpf.Controls.IconTileButton.GlyphBrush"/> 依赖属性。</summary>
+        </member>
+        <member name="P:Wpf.Controls.IconTileButton.GlyphBrush">
+            <summary>
+            图标颜色。为 <c>null</c>（默认）时按 <see cref="P:Wpf.Controls.IconTileButton.State"/> 自动取色
+            （已激励/报警 → 白色；未激励/禁用 → 对应的灰）。
+            </summary>
+            <remarks>
+            为什么需要它：浅色强调色（黄色 #F3D358 之类）上放白色图标对比度不足，
+            现场规范里这类图块用深灰图标（#5E5E5E）。是否用深色取决于**强调色的明度**，
+            控件不应该猜，所以交给使用方显式指定。
+            </remarks>
+        </member>
+        <member name="F:Wpf.Controls.IconTileButton.GlyphStrokeThicknessProperty">
+            <summary>标识 <see cref="P:Wpf.Controls.IconTileButton.GlyphStrokeThickness"/> 依赖属性。</summary>
+        </member>
+        <member name="P:Wpf.Controls.IconTileButton.GlyphStrokeThickness">
+            <summary>
+            图标的描边线宽。<c>0</c>（默认）表示图标是**填充型**（实心图形）；
+            大于 0 表示图标是**线框型**：此时图标路径应当是开放路径，控件只描边、不填充。
+            </summary>
+            <remarks>
+            同一套界面规范里常常混用两种图标（例如房子用实心、铃铛用线框）。
+            若只支持填充，线框图标就必须手工写成"闭合的细长多边形"，
+            路径数据会膨胀十几倍且难以维护，所以这里直接支持描边。
+            </remarks>
+        </member>
+        <member name="F:Wpf.Controls.IconTileButton.EffectiveGlyphFillProperty">
+            <summary>标识 <see cref="P:Wpf.Controls.IconTileButton.EffectiveGlyphFill"/> 依赖属性。</summary>
+        </member>
+        <member name="P:Wpf.Controls.IconTileButton.EffectiveGlyphFill">
+            <summary>实际用于填充的画刷（由状态与 <see cref="P:Wpf.Controls.IconTileButton.GlyphBrush"/> 算出，线框型图标时为 null）。</summary>
+        </member>
+        <member name="F:Wpf.Controls.IconTileButton.EffectiveGlyphStrokeProperty">
+            <summary>标识 <see cref="P:Wpf.Controls.IconTileButton.EffectiveGlyphStroke"/> 依赖属性。</summary>
+        </member>
+        <member name="P:Wpf.Controls.IconTileButton.EffectiveGlyphStroke">
+            <summary>实际用于描边的画刷（仅线框型图标有值）。</summary>
+        </member>
+        <member name="F:Wpf.Controls.IconTileButton.TileCornerRadiusProperty">
+            <summary>标识 <see cref="P:Wpf.Controls.IconTileButton.TileCornerRadius"/> 依赖属性。</summary>
+        </member>
+        <member name="P:Wpf.Controls.IconTileButton.TileCornerRadius">
+            <summary>图块圆角。默认 8px / 54px ≈ 15%（画面规范里的圆角矩形比例）。</summary>
+        </member>
+        <member name="M:Wpf.Controls.IconTileButton.UpdateGlyphBrushes">
+            <summary>
+            由「状态 + 显式指定的图标色 + 是否线框」算出最终填充/描边画刷。
+            </summary>
+            <remarks>
+            放在 C# 里算而不是写成模板触发器，理由与 ToggleSwitch 的滑块位置一致：
+            触发器要表达"若指定了颜色就用指定的，否则按状态取"，需要多层 Trigger 互相盖，
+            规则一散到 XAML 里就没人能一眼看全；这里一个方法就是全部规则。
+            </remarks>
+        </member>
+        <member name="T:Wpf.Controls.StatusPill">
+            <summary>
+            状态胶囊：一个圆角背景上放「可选图标 + 文字」，用于表达枚举型状态。
+            </summary>
+            <remarks>
+            <para>
+            典型用法是"用户等级"（无登录 / Level 1 / Level 2 / Level 3）与"设备状态"
+            （Running / Idle / Engineering / Planned DT / Downtime）这类列表：
+            左侧一块固定宽度的彩色胶囊，右侧是该状态的文字解释，
+            扫视时靠颜色定位、靠文字确认，不依赖颜色单独传达信息。
+            </para>
+            <para>
+            与 <see cref="T:Wpf.Controls.IconTileButton"/> 的分工：图块按钮是"可操作的功能键"，胶囊是"只读的状态标签"。
+            因此本控件继承 <see cref="T:System.Windows.Controls.ContentControl"/>（不响应点击），避免误点。
+            </para>
+            <para>
+            底色与文字色直接用 <see cref="P:System.Windows.Controls.Control.Background"/> 与 <see cref="P:System.Windows.Controls.Control.Foreground"/>，
+            不另造一套属性 —— 使用方按实例给色即可：
+            <code>
+            &lt;controls:StatusPill Background="#FFCBE84A" Foreground="#FF1B2434"
+                                  Icon="{StaticResource Icon.Person}" Content="Level 1" /&gt;
+            </code>
+            </para>
+            <para>
+            ⚠️ 深色底（例如红色 Downtime）请配白色前景：<c>Foreground="#FFFFFFFF"</c>。
+            颜色与可读性的搭配责任在使用方，控件不做猜测。
+            </para>
+            </remarks>
+        </member>
+        <member name="F:Wpf.Controls.StatusPill.IconProperty">
+            <summary>标识 <see cref="P:Wpf.Controls.StatusPill.Icon"/> 依赖属性。</summary>
+        </member>
+        <member name="P:Wpf.Controls.StatusPill.Icon">
+            <summary>胶囊内的小图标（可空；为空时不占位）。</summary>
+        </member>
+        <member name="F:Wpf.Controls.StatusPill.GlyphSizeProperty">
+            <summary>标识 <see cref="P:Wpf.Controls.StatusPill.GlyphSize"/> 依赖属性。</summary>
+        </member>
+        <member name="P:Wpf.Controls.StatusPill.GlyphSize">
+            <summary>胶囊内图标大小。</summary>
+        </member>
+        <member name="F:Wpf.Controls.StatusPill.PillCornerRadiusProperty">
+            <summary>标识 <see cref="P:Wpf.Controls.StatusPill.PillCornerRadius"/> 依赖属性。</summary>
+        </member>
+        <member name="P:Wpf.Controls.StatusPill.PillCornerRadius">
+            <summary>
+            胶囊圆角。默认 4px，即**圆角矩形**。
+            </summary>
+            <remarks>
+            刻意不默认做成"完全半圆"（胶囊/跑道形）：画面规范里的状态标签是圆角矩形。
+            需要跑道形时把本属性设成一个大值即可（WPF 会把圆角自动收敛到不超过短边一半），
+            例如 <c>PillCornerRadius="999"</c>。
+            </remarks>
+        </member>
+        <member name="T:Wpf.Controls.ToggleSwitch">
+            <summary>
+            开关控件：把「是 / 否」这样的二值状态做成一个可点击、可键盘操作、可双向绑定、可换色的控件。
+            </summary>
+            <remarks>
+            <para>
+            这是一个 <b>Lookless Control</b>（无外观控件）：C# 里只定义行为和依赖属性，
+            视觉外观由 <c>Themes/Generic.xaml</c> 里的 <see cref="T:System.Windows.Controls.ControlTemplate"/> 描述。
+            使用方想把外观改成拨杆、复选框或纯文字开关，只需替换模板，不必改本类的任何一行代码。
+            </para>
+            <para>
+            最简用法（引用程序集后直接写标签，<b>不需要</b>合并任何资源字典）：
+            <code>
+            &lt;controls:ToggleSwitch IsChecked="{Binding IsAlarmEnabled, Mode=TwoWay}"
+                                     OnContent="启用" OffContent="停用"
+                                     Checked="OnChecked" Unchecked="OnUnchecked" /&gt;
+            </code>
+            </para>
+            <para>
+            换色有两种粒度，都不需要重写模板：
+            <list type="bullet">
+            <item>单个实例：直接设 <see cref="P:Wpf.Controls.ToggleSwitch.OnBrush"/> / <see cref="P:Wpf.Controls.ToggleSwitch.OffBrush"/> / <see cref="P:Wpf.Controls.ToggleSwitch.ThumbBrush"/>；</item>
+            <item>整个应用：定义 <c>Style TargetType="controls:ToggleSwitch"</c> 统一设这几个属性
+            （写法见 README「换色」一节）。</item>
+            </list>
+            </para>
+            <para>
+            键盘可达性：Tab 聚焦，Space / Enter 切换。
+            无障碍支持：提供 UI Automation 的 Toggle 模式（见 <see cref="T:Wpf.Controls.Automation.ToggleSwitchAutomationPeer"/>）。
+            </para>
+            </remarks>
+        </member>
+        <member name="F:Wpf.Controls.ToggleSwitch.TrackPartName">
+            <summary>模板中轨道元素的约定名称。</summary>
+        </member>
+        <member name="F:Wpf.Controls.ToggleSwitch.ThumbPartName">
+            <summary>模板中滑块元素的约定名称。滑块必须放在 Canvas 里，位置由本类计算。</summary>
+        </member>
+        <member name="F:Wpf.Controls.ToggleSwitch.IsCheckedProperty">
+            <summary>标识 <see cref="P:Wpf.Controls.ToggleSwitch.IsChecked"/> 依赖属性。</summary>
+            <remarks>
+            <c>BindsTwoWayByDefault</c>：使用方写 <c>IsChecked="{Binding X}"</c> 时默认就是双向绑定，
+            不必每次补一个 <c>Mode=TwoWay</c>（漏写 Mode 是很常见的低级错误来源）。
+            </remarks>
+        </member>
+        <member name="P:Wpf.Controls.ToggleSwitch.IsChecked">
+            <summary>开 / 关状态。默认双向绑定。</summary>
+        </member>
+        <member name="F:Wpf.Controls.ToggleSwitch.OnContentProperty">
+            <summary>标识 <see cref="P:Wpf.Controls.ToggleSwitch.OnContent"/> 依赖属性。</summary>
+        </member>
+        <member name="P:Wpf.Controls.ToggleSwitch.OnContent">
+            <summary>打开状态下显示的说明内容（文字、图标或任意元素）。</summary>
+        </member>
+        <member name="F:Wpf.Controls.ToggleSwitch.OffContentProperty">
+            <summary>标识 <see cref="P:Wpf.Controls.ToggleSwitch.OffContent"/> 依赖属性。</summary>
+        </member>
+        <member name="P:Wpf.Controls.ToggleSwitch.OffContent">
+            <summary>关闭状态下显示的说明内容（文字、图标或任意元素）。</summary>
+        </member>
+        <member name="F:Wpf.Controls.ToggleSwitch.OnBrushProperty">
+            <summary>标识 <see cref="P:Wpf.Controls.ToggleSwitch.OnBrush"/> 依赖属性。</summary>
+        </member>
+        <member name="P:Wpf.Controls.ToggleSwitch.OnBrush">
+            <summary>打开状态的轨道颜色。</summary>
+        </member>
+        <member name="F:Wpf.Controls.ToggleSwitch.OffBrushProperty">
+            <summary>标识 <see cref="P:Wpf.Controls.ToggleSwitch.OffBrush"/> 依赖属性。</summary>
+        </member>
+        <member name="P:Wpf.Controls.ToggleSwitch.OffBrush">
+            <summary>关闭状态的轨道颜色。</summary>
+        </member>
+        <member name="F:Wpf.Controls.ToggleSwitch.ThumbBrushProperty">
+            <summary>标识 <see cref="P:Wpf.Controls.ToggleSwitch.ThumbBrush"/> 依赖属性。</summary>
+        </member>
+        <member name="P:Wpf.Controls.ToggleSwitch.ThumbBrush">
+            <summary>滑块颜色。</summary>
+        </member>
+        <member name="F:Wpf.Controls.ToggleSwitch.TrackWidthProperty">
+            <summary>标识 <see cref="P:Wpf.Controls.ToggleSwitch.TrackWidth"/> 依赖属性。</summary>
+        </member>
+        <member name="P:Wpf.Controls.ToggleSwitch.TrackWidth">
+            <summary>轨道宽度。改动后滑块的行程会自动重算。</summary>
+        </member>
+        <member name="F:Wpf.Controls.ToggleSwitch.TrackHeightProperty">
+            <summary>标识 <see cref="P:Wpf.Controls.ToggleSwitch.TrackHeight"/> 依赖属性。</summary>
+        </member>
+        <member name="P:Wpf.Controls.ToggleSwitch.TrackHeight">
+            <summary>轨道高度。改动后滑块会自动重新垂直居中。</summary>
+        </member>
+        <member name="F:Wpf.Controls.ToggleSwitch.ThumbSizeProperty">
+            <summary>标识 <see cref="P:Wpf.Controls.ToggleSwitch.ThumbSize"/> 依赖属性。</summary>
+        </member>
+        <member name="P:Wpf.Controls.ToggleSwitch.ThumbSize">
+            <summary>滑块边长（正方形）。</summary>
+        </member>
+        <member name="F:Wpf.Controls.ToggleSwitch.ThumbMarginProperty">
+            <summary>标识 <see cref="P:Wpf.Controls.ToggleSwitch.ThumbMargin"/> 依赖属性。</summary>
+        </member>
+        <member name="P:Wpf.Controls.ToggleSwitch.ThumbMargin">
+            <summary>滑块到轨道内壁的间距，也是滑块行程的起止留白。</summary>
+        </member>
+        <member name="F:Wpf.Controls.ToggleSwitch.CheckedEvent">
+            <summary>标识 <see cref="E:Wpf.Controls.ToggleSwitch.Checked"/> 路由事件。</summary>
+            <remarks>
+            用路由事件而不是普通 CLR 事件：它可以在外层容器上被统一捕获，
+            也可以在样式里用 EventTrigger 响应 —— 普通事件两者都做不到。
+            </remarks>
+        </member>
+        <member name="F:Wpf.Controls.ToggleSwitch.UncheckedEvent">
+            <summary>标识 <see cref="E:Wpf.Controls.ToggleSwitch.Unchecked"/> 路由事件。</summary>
+        </member>
+        <member name="E:Wpf.Controls.ToggleSwitch.Checked">
+            <summary>状态由关变为开时触发。</summary>
+        </member>
+        <member name="E:Wpf.Controls.ToggleSwitch.Unchecked">
+            <summary>状态由开变为关时触发。</summary>
+        </member>
+        <member name="M:Wpf.Controls.ToggleSwitch.Toggle">
+            <summary>切换开 / 关状态，等价于用户点击一次。</summary>
+            <remarks>
+            这里用 <see cref="M:System.Windows.DependencyObject.SetCurrentValue(System.Windows.DependencyProperty,System.Object)"/> 而不是 <c>SetValue</c>：
+            当 <see cref="P:Wpf.Controls.ToggleSwitch.IsChecked"/> 绑定到 ViewModel 时，<c>SetValue</c> 会把整条绑定移除，
+            于是"点一下开关，绑定就断了，ViewModel 再也收不到值"——WPF 里非常常见的一个陷阱。
+            <c>SetCurrentValue</c> 只修改当前值，保留绑定与值来源。
+            </remarks>
+        </member>
+        <member name="M:Wpf.Controls.ToggleSwitch.OnIsCheckedChanged(System.Boolean)">
+            <summary>状态变化时的扩展点。派生类可重写以响应开 / 关。</summary>
+            <param name="isChecked">变化后的状态。</param>
+        </member>
+        <member name="M:Wpf.Controls.ToggleSwitch.OnCreateAutomationPeer">
+            <inheritdoc />
+        </member>
+        <member name="M:Wpf.Controls.ToggleSwitch.OnApplyTemplate">
+            <inheritdoc />
+        </member>
+        <member name="M:Wpf.Controls.ToggleSwitch.OnKeyDown(System.Windows.Input.KeyEventArgs)">
+            <inheritdoc />
+        </member>
+        <member name="M:Wpf.Controls.ToggleSwitch.OnMouseLeftButtonUp(System.Windows.Input.MouseButtonEventArgs)">
+            <inheritdoc />
+        </member>
+        <member name="M:Wpf.Controls.ToggleSwitch.UpdateThumbPosition(System.Boolean)">
+            <summary>
+            把滑块摆到当前状态对应的位置。
+            </summary>
+            <remarks>
+            <b>为什么位置在 C# 里算，而不是在模板触发器里写死一个位移值</b>：
+            位移 = 轨道宽 − 左右边框 − 滑块边长 − 间距，XAML 的动画做不了这个减法，
+            只能把算好的常量硬写进 Storyboard。那样一旦有人改了 <see cref="P:Wpf.Controls.ToggleSwitch.TrackWidth"/>，
+            滑块就会停不到位或跑出轨道，而且是**静默出错**。
+            放在 C# 里算，四个尺寸属性随便改（包括运行时改），位置都自动正确。
+            </remarks>
+        </member>
+        <member name="T:Wpf.Controls.ValueSelector">
+            <summary>
+            值选择器：白底圆角值框 + 右侧蓝色圆角"上下箭头"按钮，点开是候选值菜单。
+            </summary>
+            <remarks>
+            <para>
+            画面规范里的设置页（Site / Prod Type / Line / Station / Machine# / Language）要求
+            <b>只能选、不能手工输入</b>，所以本控件没有文本框：点任意位置弹出候选值菜单，
+            选中即写回 <see cref="P:Wpf.Controls.ValueSelector.Value"/>。
+            </para>
+            <para>
+            用法：
+            <code>
+            &lt;controls:ValueSelector Value="{Binding Site}" Choices="{Binding Sites}" /&gt;
+            </code>
+            只读时用 <c>IsEnabled="False"</c>（整块变灰，蓝色按钮同步变淡）。
+            </para>
+            </remarks>
+        </member>
+        <member name="F:Wpf.Controls.ValueSelector.ValueProperty">
+            <summary>标识 <see cref="P:Wpf.Controls.ValueSelector.Value"/> 依赖属性。</summary>
+        </member>
+        <member name="F:Wpf.Controls.ValueSelector.ChoicesProperty">
+            <summary>标识 <see cref="P:Wpf.Controls.ValueSelector.Choices"/> 依赖属性。</summary>
+        </member>
+        <member name="F:Wpf.Controls.ValueSelector.CornerRadiusProperty">
+            <summary>标识 <see cref="P:Wpf.Controls.ValueSelector.CornerRadius"/> 依赖属性。</summary>
+        </member>
+        <member name="F:Wpf.Controls.ValueSelector.AccentBrushProperty">
+            <summary>标识 <see cref="P:Wpf.Controls.ValueSelector.AccentBrush"/> 依赖属性。</summary>
+        </member>
+        <member name="F:Wpf.Controls.ValueSelector.ValueFontSizeProperty">
+            <summary>标识 <see cref="P:Wpf.Controls.ValueSelector.ValueFontSize"/> 依赖属性。</summary>
+        </member>
+        <member name="P:Wpf.Controls.ValueSelector.Value">
+            <summary>当前值（双向绑定）。</summary>
+        </member>
+        <member name="P:Wpf.Controls.ValueSelector.Choices">
+            <summary>候选值集合（字符串）。</summary>
+        </member>
+        <member name="P:Wpf.Controls.ValueSelector.CornerRadius">
+            <summary>值框圆角。</summary>
+        </member>
+        <member name="P:Wpf.Controls.ValueSelector.AccentBrush">
+            <summary>右侧选择按钮的底色（默认品牌蓝 #1284FF）。</summary>
+        </member>
+        <member name="P:Wpf.Controls.ValueSelector.ValueFontSize">
+            <summary>值文字大小。</summary>
+        </member>
+        <member name="E:Wpf.Controls.ValueSelector.SelectionChanged">
+            <summary>选中项变化时触发（在 <see cref="P:Wpf.Controls.ValueSelector.Value"/> 更新之后）。</summary>
+        </member>
+        <member name="M:Wpf.Controls.ValueSelector.OnClick">
+            <inheritdoc />
+        </member>
+        <member name="T:Wpf.Controls.ItemGapConverter">
+            <summary>
+            把"键间距"（double）转成"右侧留白"（<see cref="T:System.Windows.Thickness"/>），供 ItemsControl 的容器使用。
+            </summary>
+            <remarks>
+            <para>
+            为什么需要它：<see cref="T:Wpf.Controls.AppMenuBar"/> 要求"相邻键之间是固定间距"，
+            而集合里每个条目是被 <see cref="T:System.Windows.Controls.ItemsControl"/> 自动包进容器
+            （<see cref="T:System.Windows.Controls.ContentPresenter"/>）的，容器由框架生成，
+            使用方不方便自己设 Margin。
+            </para>
+            <para>
+            最直觉的写法是给 <c>StackPanel</c> 设 <c>Spacing</c> —— 但**本机 WPF 10.0.12 没有这个属性**
+            （实测编译报 MC3072：XML 命名空间里不存在属性 "Spacing"），
+            因此只能走"容器 Margin + 转换器"这条路。
+            </para>
+            <para>
+            副作用：最后一个条目也会带上这个间距。对左组来说是它到中间内容的额外留白，
+            对右组来说是栏尾的额外留白，都属于可接受的视觉结果。
+            </para>
+            </remarks>
+        </member>
+        <member name="M:Wpf.Controls.ItemGapConverter.Convert(System.Object,System.Type,System.Object,System.Globalization.CultureInfo)">
+            <inheritdoc />
+        </member>
+        <member name="M:Wpf.Controls.ItemGapConverter.ConvertBack(System.Object,System.Type,System.Object,System.Globalization.CultureInfo)">
+            <inheritdoc />
+        </member>
+        <member name="T:Wpf.Controls.TileState">
+            <summary>
+            图标图块的显示状态。
+            </summary>
+            <remarks>
+            这四种状态来自 HMI 画面规范里"同一个功能键在不同条件下长什么样"的描述：
+            <list type="bullet">
+            <item><see cref="F:Wpf.Controls.TileState.Energized"/> —— 已激励：功能当前生效，用该功能自己的强调色；</item>
+            <item><see cref="F:Wpf.Controls.TileState.Alarm"/> —— 报警：功能处于异常，统一用警示色（红色），不能用各自的强调色，
+            否则"报警"和"正常运行"在扫视时区分不出来；</item>
+            <item><see cref="F:Wpf.Controls.TileState.DeEnergized"/> —— 未激励：功能存在但当前未生效，中性灰；</item>
+            <item><see cref="F:Wpf.Controls.TileState.Disabled"/> —— 权限禁用：当前用户等级不允许操作，比未激励更淡
+            （"不可用"必须与"未激活"在视觉上可区分，否则操作员会反复去点一个永远点不动的按钮）。</item>
+            </list>
+            </remarks>
+        </member>
+        <member name="F:Wpf.Controls.TileState.Energized">
+            <summary>已激励（功能生效）。</summary>
+        </member>
+        <member name="F:Wpf.Controls.TileState.Alarm">
+            <summary>报警（功能异常）。</summary>
+        </member>
+        <member name="F:Wpf.Controls.TileState.DeEnergized">
+            <summary>未激励（功能存在但未生效）。</summary>
+        </member>
+        <member name="F:Wpf.Controls.TileState.Disabled">
+            <summary>权限禁用（当前用户等级不可操作）。</summary>
+        </member>
+        <member name="T:Wpf.Controls.WindowButtonKind">
+            <summary>
+            标题行左上角三个窗口按钮的语义。
+            </summary>
+            <remarks>
+            控件只负责"长什么样、点了以后把哪个语义传出去"，**具体动作由宿主决定**：
+            因为同一个菜单栏可能被放在 Window 里，也可能放在无窗口的测试宿主/设计器里，
+            控件自己去关窗口会把可用性写死。
+            宿主通过 <see cref="P:Wpf.Controls.AppMenuBar.WindowButtonCommand"/> 接管，
+            命令参数就是这里的枚举值。
+            </remarks>
+        </member>
+        <member name="F:Wpf.Controls.WindowButtonKind.Close">
+            <summary>关闭（红色圆点）。</summary>
+        </member>
+        <member name="F:Wpf.Controls.WindowButtonKind.Minimize">
+            <summary>最小化（黄色圆点）。</summary>
+        </member>
+        <member name="F:Wpf.Controls.WindowButtonKind.MaximizeOrRestore">
+            <summary>最大化 / 还原（绿色圆点，按当前状态切换）。</summary>
+        </member>
+        <member name="T:Wpf.Controls.DesignTokens">
+            <summary>
+            控件库的默认视觉令牌（颜色与尺寸常量）。
+            </summary>
+            <remarks>
+            <para>
+            <b>为什么令牌写在 C# 里而不是 XAML 资源字典里</b> —— 这是被 WPF 的实际行为逼出来的：
+            WPF 的程序集主题字典（<c>Themes/Generic.xaml</c>）只参与「默认 Style / ControlTemplate」的查找，
+            <b>不参与资源查找</b>。也就是说，模板里写 <c>{DynamicResource MyBrush}</c> 时，
+            若 <c>MyBrush</c> 只存在于 Generic.xaml / Tokens.xaml 中，运行时会解析成 <c>null</c> ——
+            控件照常存在、能点击，但**什么都画不出来**，而且编译期与运行期都不报错。
+            （这个结论是实测得到的，见 README「两条必须知道的 WPF 行为」。）
+            </para>
+            <para>
+            因此这里的刷子被用作控件依赖属性的<b>默认值</b>：不依赖任何资源查找，
+            使用方引用 DLL 后直接写 <c>&lt;controls:ToggleSwitch /&gt;</c> 就一定能看到正确外观。
+            要做到"零配置也不会画不出来"，默认值必须来自代码而不是模板里的资源引用。
+            </para>
+            <para>
+            使用方也可以在自己的 XAML 里直接复用这些颜色，例如
+            <c>Foreground="{x:Static controls:DesignTokens.TextPrimary}"</c>，
+            从而让业务界面和控件库共用同一套配色，不需要合并任何资源字典。
+            </para>
+            </remarks>
+        </member>
+        <member name="F:Wpf.Controls.DesignTokens.Brand">
+            <summary>主色。开关打开时的轨道颜色，同时用作键盘焦点环颜色。</summary>
+        </member>
+        <member name="F:Wpf.Controls.DesignTokens.TrackOff">
+            <summary>关闭状态的轨道底色。</summary>
+        </member>
+        <member name="F:Wpf.Controls.DesignTokens.Thumb">
+            <summary>滑块颜色。</summary>
+        </member>
+        <member name="F:Wpf.Controls.DesignTokens.Border">
+            <summary>描边颜色。</summary>
+        </member>
+        <member name="F:Wpf.Controls.DesignTokens.TextPrimary">
+            <summary>主要文字颜色。</summary>
+        </member>
+        <member name="F:Wpf.Controls.DesignTokens.TextSecondary">
+            <summary>次要文字颜色（例如禁用态的说明文字）。</summary>
+        </member>
+        <member name="F:Wpf.Controls.DesignTokens.Danger">
+            <summary>警示 / 故障色。用于报警态图块、最高权限标识等。</summary>
+        </member>
+        <member name="F:Wpf.Controls.DesignTokens.OnAccent">
+            <summary>着色背景上的前景色（图块里的图标、深色胶囊上的文字）。</summary>
+        </member>
+        <member name="F:Wpf.Controls.DesignTokens.TileIdle">
+            <summary>未激励（De-energized）图块的底色。</summary>
+        </member>
+        <member name="F:Wpf.Controls.DesignTokens.TileIdleGlyph">
+            <summary>未激励图块的图标色。</summary>
+        </member>
+        <member name="F:Wpf.Controls.DesignTokens.NaviPageIconForegroud">
+            <summary>导航图标前景色</summary>
+        </member>
+        <member name="F:Wpf.Controls.DesignTokens.DeviceStateIconForegroud">
+            <summary>
+            设备状态图标前景色
+            </summary>
+        </member>
+        <member name="F:Wpf.Controls.DesignTokens.TileDisabled">
+            <summary>权限禁用（Disabled）图块的底色。比未激励更淡，用于区分"不可用"与"未激活"。</summary>
+        </member>
+        <member name="F:Wpf.Controls.DesignTokens.TileDisabledGlyph">
+            <summary>权限禁用图块的图标色。</summary>
+        </member>
+        <member name="F:Wpf.Controls.DesignTokens.GlyphOnLight">
+            <summary>着色图块上最常用的深色图标（浅色底图块用深色图标，对比度更好）。</summary>
+        </member>
+        <member name="F:Wpf.Controls.DesignTokens.PillNeutral">
+            <summary>中性胶囊底色（"无登录"、"未连接"这类非语义状态）。</summary>
+        </member>
+        <member name="F:Wpf.Controls.DesignTokens.Surface">
+            <summary>栏体 / 面板底色。</summary>
+        </member>
+        <member name="F:Wpf.Controls.DesignTokens.BarSurface">
+            <summary>菜单栏底色（画面规范里菜单栏是浅灰 #ECECEC，比页面底色略深一档）。</summary>
+        </member>
+        <member name="F:Wpf.Controls.DesignTokens.Divider">
+            <summary>分隔线（栏体内的细线、区块分界）。</summary>
+        </member>
+        <member name="F:Wpf.Controls.DesignTokens.DividerStrong">
+            <summary>
+            强分隔线：标题栏与工作区之间的那道线。
+            </summary>
+            <remarks>
+            标题栏与工作区通常同为浅灰底（#ECECEC），用 <see cref="F:Wpf.Controls.DesignTokens.Divider"/>（#E8E8E8）几乎看不见。
+            取值取自画面规范实测的 #C1C1C1。
+            </remarks>
+        </member>
+        <member name="F:Wpf.Controls.DesignTokens.WindowButtonClose">
+            <summary>关闭按钮（红）。</summary>
+        </member>
+        <member name="F:Wpf.Controls.DesignTokens.WindowButtonMinimize">
+            <summary>最小化按钮（黄）。</summary>
+        </member>
+        <member name="F:Wpf.Controls.DesignTokens.WindowButtonZoom">
+            <summary>最大化按钮（绿）。</summary>
+        </member>
+        <member name="F:Wpf.Controls.DesignTokens.WindowGlyphClose">
+            <summary>关闭图标（×）颜色。</summary>
+        </member>
+        <member name="F:Wpf.Controls.DesignTokens.WindowGlyphMinimize">
+            <summary>最小化图标（−）颜色。</summary>
+        </member>
+        <member name="F:Wpf.Controls.DesignTokens.WindowGlyphZoom">
+            <summary>最大化图标（⤢）颜色。</summary>
+        </member>
+        <member name="F:Wpf.Controls.DesignTokens.ToggleTrackWidth">
+            <summary>轨道宽度。</summary>
+        </member>
+        <member name="F:Wpf.Controls.DesignTokens.ToggleTrackHeight">
+            <summary>轨道高度。</summary>
+        </member>
+        <member name="F:Wpf.Controls.DesignTokens.ToggleThumbSize">
+            <summary>滑块边长。</summary>
+        </member>
+        <member name="F:Wpf.Controls.DesignTokens.ToggleThumbMargin">
+            <summary>滑块到轨道内壁的水平间距。</summary>
+        </member>
+        <member name="F:Wpf.Controls.DesignTokens.TileSize">
+            <summary>图标图块的默认边长。</summary>
+        </member>
+        <member name="F:Wpf.Controls.DesignTokens.TileGlyphSize">
+            <summary>图标图块内图标的默认大小。</summary>
+        </member>
+        <member name="F:Wpf.Controls.DesignTokens.PillGlyphSize">
+            <summary>状态胶囊内图标的默认大小。</summary>
+        </member>
+    </members>
+</doc>
